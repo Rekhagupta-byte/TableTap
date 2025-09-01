@@ -1,0 +1,33 @@
+// android/build.gradle
+
+buildscript {
+    ext.kotlin_version = '1.9.10' // ✅ Use modern, supported version
+    repositories {
+        google()
+        mavenCentral() // ✅ Replace jcenter()
+    }
+
+    dependencies {
+        classpath "com.android.tools.build:gradle:8.3.0"
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    }
+}
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral() // ✅ Required for Flutter + native plugins
+    }
+}
+
+rootProject.buildDir = '../build'
+subprojects {
+    project.buildDir = "${rootProject.buildDir}/${project.name}"
+}
+subprojects {
+    project.evaluationDependsOn(':app')
+}
+
+tasks.register("clean", Delete) {
+    delete rootProject.buildDir
+}

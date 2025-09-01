@@ -1,0 +1,38 @@
+plugins {
+    id "com.android.application"
+    id "kotlin-android"
+    id "dev.flutter.flutter-gradle-plugin" // ✅ Must be last
+}
+
+android {
+    namespace = "com.example.tabletap_frontend"
+    compileSdk = 35
+
+    defaultConfig {
+        applicationId = "com.example.TableTap"
+        minSdk = 21
+        targetSdk = 35
+        versionCode = 1
+        versionName = "1.0"
+    }
+    buildToolsVersion "35.0.0"
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = "17"
+    }
+
+    buildTypes {
+        release {
+            signingConfig = signingConfigs.debug // 📝 Replace with real signing key before publishing
+        }
+    }
+}
+
+flutter {
+    source = "../.."
+}
