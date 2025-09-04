@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:tabletap_frontend/screens/staff/staff_change_password_screen.dart';
 import 'dart:convert';
 
 import '../home/home_screen.dart';
@@ -23,74 +22,77 @@ class _LoginScreenState extends State<LoginScreen> {
   final passwordController = TextEditingController();
   bool passwordVisible = false;
 
-  Future<void> login(BuildContext context) async {
-    if (!_formKey.currentState!.validate()) return;
+Future<void> login(BuildContext context) async {
+  if (!_formKey.currentState!.validate()) return;
 
-    final email = emailController.text.trim();
-    final password = passwordController.text;
+  final email = emailController.text.trim();
+  final password = passwordController.text;
 
-    final url = Uri.parse("http://192.168.0.244:5000/login");
+  final url = Uri.parse("http://192.168.0.244:5000/login");
 
-    try {
-      final response = await http.post(
-        url,
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'email': email, 'password': password}),
+  try {
+    final response = await http.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'email': email, 'password': password}),
+    );
+
+    final data = jsonDecode(response.body);
+
+    if (response.statusCode == 200 && data['success'] == true) {
+      final user = data['user'];
+      final role = user['role'];
+      int isActivated = user['is_activated'] != null
+          ? int.parse(user['is_activated'].toString())
+          : 0;
+
+      // Save login info
+      await saveLoginStatus(user['email'], role, user, isActivated);
+
+      // Show success message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(data['message'] ?? 'Login successful')),
       );
 
-      final data = jsonDecode(response.body);
-
-      if (response.statusCode == 200 && data['success'] == true) {
-        final user = data['user'];
-        final role = user['role'];
-
-        int isActivated = data['is_activated'] != null
-    ? int.parse(data['is_activated'].toString())
-    : 0; // 0 means not activated, 1 means activated
-
-        await saveLoginStatus(user['email'], role, user, isActivated);
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(data['message'])),
+      // Navigate based on role and activation status
+      if (role == 'owner') {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const OwnerHomeScreen()),
         );
-
-        if (role == 'owner') {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (_) => const OwnerHomeScreen()),
+      } else if (role == 'staff') {
+        if (isActivated == 0) {
+          // Show inactive message
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                  "Your account is deactivated. Please contact the owner."),
+            ),
           );
-        } else if (role == 'staff') {
-          if (isActivated == 0) {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                  builder: (_) =>
-                      StaffChangePasswordScreen(email: user['email'])),
-            );
-          } else {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                  builder: (_) => StaffHomeScreen(staff: user)),
-            );
-          }
+          return; // Stop further navigation
         } else {
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (_) => const HomeScreen()),
+            MaterialPageRoute(builder: (_) => StaffHomeScreen(staff: user)),
           );
         }
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(data['message'] ?? 'Login failed')),
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const HomeScreen()),
         );
       }
-    } catch (e) {
+    } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Network error, please try again.")),
+        SnackBar(content: Text(data['message'] ?? 'Login failed')),
       );
     }
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Network error, please try again.")),
+    );
   }
+}
 
   Future<void> saveLoginStatus(
       String email, String role, Map<String, dynamic> user, int isActivated) async {

@@ -16,8 +16,11 @@ class StaffChangePasswordScreen extends StatefulWidget {
 class _StaffChangePasswordScreenState
     extends State<StaffChangePasswordScreen> {
   final _formKey = GlobalKey<FormState>();
+
+  final TextEditingController _oldPasswordController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmController = TextEditingController();
+
   bool _isLoading = false;
 
   Future<void> _changePassword() async {
@@ -31,6 +34,7 @@ class _StaffChangePasswordScreenState
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'email': widget.email,
+          'old_password': _oldPasswordController.text.trim(),
           'new_password': _passwordController.text.trim(),
         }),
       );
@@ -79,9 +83,9 @@ class _StaffChangePasswordScreenState
           key: _formKey,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
-            mainAxisAlignment: MainAxisAlignment.start,
             children: [
               const SizedBox(height: 20),
+
               Text(
                 'Set a New Password',
                 style: TextStyle(
@@ -91,7 +95,31 @@ class _StaffChangePasswordScreenState
                 ),
                 textAlign: TextAlign.center,
               ),
+
               const SizedBox(height: 30),
+
+              // Old Password
+              TextFormField(
+                controller: _oldPasswordController,
+                obscureText: true,
+                decoration: InputDecoration(
+                  labelText: 'Old Password',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  prefixIcon: const Icon(Icons.lock_clock_outlined),
+                ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Enter old password';
+                  }
+                  return null;
+                },
+              ),
+
+              const SizedBox(height: 16),
+
+              // New Password
               TextFormField(
                 controller: _passwordController,
                 obscureText: true,
@@ -103,12 +131,19 @@ class _StaffChangePasswordScreenState
                   prefixIcon: const Icon(Icons.lock),
                 ),
                 validator: (value) {
-                  if (value == null || value.isEmpty) return 'Enter password';
-                  if (value.length < 6) return 'Password must be at least 6 characters';
+                  if (value == null || value.isEmpty) {
+                    return 'Enter password';
+                  }
+                  if (value.length < 6) {
+                    return 'Password must be at least 6 characters';
+                  }
                   return null;
                 },
               ),
+
               const SizedBox(height: 16),
+
+              // Confirm Password
               TextFormField(
                 controller: _confirmController,
                 obscureText: true,
@@ -120,12 +155,18 @@ class _StaffChangePasswordScreenState
                   prefixIcon: const Icon(Icons.lock_outline),
                 ),
                 validator: (value) {
-                  if (value == null || value.isEmpty) return 'Confirm password';
-                  if (value != _passwordController.text) return 'Passwords do not match';
+                  if (value == null || value.isEmpty) {
+                    return 'Confirm password';
+                  }
+                  if (value != _passwordController.text) {
+                    return 'Passwords do not match';
+                  }
                   return null;
                 },
               ),
+
               const SizedBox(height: 30),
+
               _isLoading
                   ? const Center(child: CircularProgressIndicator())
                   : ElevatedButton(
@@ -140,7 +181,7 @@ class _StaffChangePasswordScreenState
                       child: const Text(
                         'Change Password',
                         style: TextStyle(
-                          color: Colors.white, // Readable text
+                          color: Colors.white,
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                         ),

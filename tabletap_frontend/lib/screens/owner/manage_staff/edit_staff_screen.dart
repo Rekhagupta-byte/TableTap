@@ -17,6 +17,7 @@ class _EditStaffScreenState extends State<EditStaffScreen> {
   late TextEditingController emailController;
   late TextEditingController phoneController;
   late String role;
+  late bool isActive; // 👈 add active/inactive tracking
 
   bool isSubmitting = false;
 
@@ -27,6 +28,7 @@ class _EditStaffScreenState extends State<EditStaffScreen> {
     emailController = TextEditingController(text: widget.staff['email']);
     phoneController = TextEditingController(text: widget.staff['phone'] ?? '');
     role = widget.staff['role'];
+    isActive = widget.staff['is_activated'] == 1; // 👈 initial value
   }
 
   @override
@@ -55,6 +57,7 @@ class _EditStaffScreenState extends State<EditStaffScreen> {
           "email": email,
           "phone": phone,
           "role": role,
+          "is_activated": isActive ? 1 : 0, // 👈 send status
         }),
       );
 
@@ -108,9 +111,39 @@ class _EditStaffScreenState extends State<EditStaffScreen> {
               _buildTextField("Phone (optional)",
                   controller: phoneController, keyboard: TextInputType.phone),
               const SizedBox(height: 10),
+
               _buildDropdown("Role", ["Waiter", "Chef", "Manager"],
                   value: role, onChanged: (val) => setState(() => role = val!)),
+
+              const SizedBox(height: 20),
+
+              // 🔥 Active/Inactive dropdown
+              DropdownButtonFormField<int>(
+                value: isActive ? 1 : 0,
+                items: const [
+                  DropdownMenuItem(
+                    value: 1,
+                    child: Text("Active", style: TextStyle(color: Colors.green)),
+                  ),
+                  DropdownMenuItem(
+                    value: 0,
+                    child:
+                        Text("Inactive", style: TextStyle(color: Colors.red)),
+                  ),
+                ],
+                onChanged: (val) {
+                  setState(() {
+                    isActive = val == 1;
+                  });
+                },
+                decoration: const InputDecoration(
+                  labelText: "Status",
+                  border: OutlineInputBorder(),
+                ),
+              ),
+
               const SizedBox(height: 30),
+
               ElevatedButton(
                 onPressed: isSubmitting ? null : _updateStaff,
                 style: ElevatedButton.styleFrom(

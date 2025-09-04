@@ -16,6 +16,7 @@ class _AddStaffScreenState extends State<AddStaffScreen> {
   String email = '';
   String role = 'Waiter';
   String phone = '';
+  bool isActive = true; // default Active
 
   bool isSubmitting = false;
 
@@ -34,6 +35,7 @@ class _AddStaffScreenState extends State<AddStaffScreen> {
           "email": email,
           "role": role,
           "phone": phone,
+          "is_activated": isActive ? 1 : 0, // ✅ send status
         }),
       );
 
@@ -94,6 +96,29 @@ class _AddStaffScreenState extends State<AddStaffScreen> {
                 ["Waiter", "Chef", "Manager"],
                 (val) => setState(() => role = val!),
               ),
+              const SizedBox(height: 20),
+              DropdownButtonFormField<int>(
+  value: isActive ? 1 : 0,
+  items: const [
+    DropdownMenuItem(
+      value: 1,
+      child: Text("Active", style: TextStyle(color: Colors.green)),
+    ),
+    DropdownMenuItem(
+      value: 0,
+      child: Text("Inactive", style: TextStyle(color: Colors.red)),
+    ),
+  ],
+  onChanged: (val) {
+    setState(() {
+      isActive = val == 1;
+    });
+  },
+  decoration: const InputDecoration(
+    labelText: "Status",
+    border: OutlineInputBorder(),
+  ),
+),
               const SizedBox(height: 30),
               ElevatedButton(
                 onPressed: isSubmitting ? null : _submitStaff,
@@ -142,7 +167,7 @@ class _AddStaffScreenState extends State<AddStaffScreen> {
   Widget _buildDropdown(
       String label, List<String> options, Function(String?) onChanged) {
     return DropdownButtonFormField<String>(
-      value: role, // updated to use the selected role
+      value: role,
       items: options
           .map((item) => DropdownMenuItem(value: item, child: Text(item)))
           .toList(),

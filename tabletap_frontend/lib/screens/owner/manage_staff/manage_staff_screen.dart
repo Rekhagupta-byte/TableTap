@@ -26,14 +26,13 @@ class _ManageStaffScreenState extends State<ManageStaffScreen> {
     final url = Uri.parse('http://192.168.0.244:5000/staff');
     final response = await http.get(url);
 
-  if (response.statusCode == 200) {
-  final data = jsonDecode(response.body);
-  setState(() {
-    staffList = data['staff'] ?? [];
-    isLoading = false;
-  });
-}
- else {
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      setState(() {
+        staffList = data['staff'] ?? [];
+        isLoading = false;
+      });
+    } else {
       setState(() => isLoading = false);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('❌ Failed to load staff list')),
@@ -46,13 +45,9 @@ class _ManageStaffScreenState extends State<ManageStaffScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text("Confirm Delete"),
-        content:
-            const Text("Are you sure you want to delete this staff member?"),
+        content: const Text("Are you sure you want to delete this staff member?"),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text("Cancel"),
-          ),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text("Cancel")),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
@@ -82,14 +77,10 @@ class _ManageStaffScreenState extends State<ManageStaffScreen> {
   void _goToEditStaff(Map<String, dynamic> staff) async {
     final result = await Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => EditStaffScreen(staff: staff),
-      ),
+      MaterialPageRoute(builder: (context) => EditStaffScreen(staff: staff)),
     );
 
-    if (result == true) {
-      fetchStaff(); // 🔁 Re-fetch updated list from server
-    }
+    if (result == true) fetchStaff(); // Re-fetch updated list
   }
 
   void _goToAddStaff() async {
@@ -98,8 +89,24 @@ class _ManageStaffScreenState extends State<ManageStaffScreen> {
       MaterialPageRoute(builder: (_) => const AddStaffScreen()),
     );
 
-    if (result == true) {
-      fetchStaff(); // Refresh after successful add
+    if (result == true) fetchStaff(); // Refresh after add
+  }
+
+  // ✅ Add this method for activation toggle
+  void _updateStaffStatus(int id, int status) async {
+    final url = Uri.parse('http://192.168.0.244:5000/staff/$id/status');
+    final response = await http.put(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({"is_activated": status}),
+    );
+
+    if (response.statusCode == 200) {
+      fetchStaff(); // Refresh list after status change
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('❌ Failed to update status')),
+      );
     }
   }
 
@@ -132,20 +139,39 @@ class _ManageStaffScreenState extends State<ManageStaffScreen> {
                       child: ListTile(
                         title: Text(
                           staff['name'],
-                          style: GoogleFonts.poppins(
-                            fontWeight: FontWeight.w600,
-                          ),
+                          style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
                         ),
-                        subtitle: Text(
-                          "${staff['email']} • ${staff['role']}",
-                          style: GoogleFonts.poppins(),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "${staff['email']} • ${staff['role']}",
+                              style: GoogleFonts.poppins(),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              staff['is_activated'] == 1 ? "Active" : "Inactive",
+                              style: GoogleFonts.poppins(
+                                color: staff['is_activated'] == 1 ? Colors.green : Colors.red,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
                         ),
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
+                            // ✅ Activation toggle switch
+                            Switch(
+                              value: staff['is_activated'] == 1,
+                              onChanged: (value) {
+                                _updateStaffStatus(staff['id'], value ? 1 : 0);
+                              },
+                              activeColor: Colors.green,
+                              inactiveThumbColor: Colors.red,
+                            ),
                             IconButton(
-                              icon:
-                                  const Icon(Icons.edit, color: Colors.orange),
+                              icon: const Icon(Icons.edit, color: Colors.orange),
                               onPressed: () => _goToEditStaff(staff),
                             ),
                             IconButton(
