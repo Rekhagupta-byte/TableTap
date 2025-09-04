@@ -139,7 +139,7 @@ def login():
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    # Owner login
+    # ---------------- Owner Login ----------------
     user = cursor.execute("SELECT * FROM owner WHERE email = ?", (email,)).fetchone()
     if user and check_password_hash(user["password_hash"], password):
         conn.close()
@@ -149,13 +149,20 @@ def login():
             "user": {
                 "email": user["email"],
                 "role": "owner",
-                "name": user["name"]
+                "name": user["name"],
+                "is_activated": 1  # always active
             }
         }), 200
 
-    # Staff login
+    # ---------------- Staff Login ----------------
     staff = cursor.execute("SELECT * FROM staff WHERE email = ?", (email,)).fetchone()
     if staff and check_password_hash(staff["password"], password):
+        if staff["is_activated"] == 0:
+            conn.close()
+            return jsonify({
+                "success": False,
+                "message": "Your account is deactivated. Please contact the owner."
+            }), 403  # Forbidden
         conn.close()
         return jsonify({
             "success": True,
@@ -163,13 +170,15 @@ def login():
             "user": {
                 "email": staff["email"],
                 "role": "staff",
-                "name": staff["name"]
-            },
-            "is_activated": staff["is_activated"]  # <- forced password change flag
+                "name": staff["name"],
+                "is_activated": staff["is_activated"]
+            }
         }), 200
 
+    # ---------------- Login Failed ----------------
     conn.close()
     return jsonify({"success": False, "message": "User not found or invalid password"}), 404
+
 
 
 

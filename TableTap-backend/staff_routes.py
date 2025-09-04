@@ -1,7 +1,7 @@
 import sqlite3
 import random
 import string
-from werkzeug.security import generate_password_hash
+from werkzeug.security import generate_password_hash, check_password_hash
 from flask import Blueprint, request, jsonify
 from flask_mail import Message
 from db import get_db_connection
@@ -155,34 +155,53 @@ Please log in and change your password after first login.
         return jsonify({"success": False, "message": "Email already exists"}), 400
     
 
-    # ------------------ Staff Change Password ------------------
+# ------------------ Staff Change Password ------------------
 @staff_bp.route('/staff/change-password', methods=['POST'])
 def staff_change_password():
     data = request.get_json()
     email = data.get('email')
+    old_password = data.get('old_password')
     new_password = data.get('new_password')
 
-    if not email or not new_password:
-        return jsonify({"success": False, "message": "Email and new password required"}), 400
-    if len(new_password) < 6:
-        return jsonify({"success": False, "message": "Password must be at least 6 characters"}), 400
+    if not email or not old_password or not new_password:
+        return jsonify({"success": False, "message": "Missing required fields"}), 400
 
-    password_hash = generate_password_hash(new_password)
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute(
-        "UPDATE staff SET password=?, is_activated=1 WHERE email=?",
-        (password_hash, email)
-    )
-    conn.commit()
-    updated = cursor.rowcount
-    conn.close()
 
-    if updated == 0:
+    # Get current password hash
+    cursor.execute("SELECT password FROM staff WHERE email = ?", (email,))
+    staff = cursor.fetchone()
+
+    if not staff:
+        conn.close()
         return jsonify({"success": False, "message": "Staff not found"}), 404
 
-    return jsonify({
-        "success": True,
-        "message": "Password changed successfully",
-        "is_activated": 1
-    }), 200
+    # Check old password
+    stored_password = staff["password"]
+    if not check_password_hash(stored_password, old_password):
+        conn.close()
+        return jsonify({"success": False, "message": "Old password is incorrect"}), 401
+
+    # Update with new password (hashed)
+    hashed_password = generate_password_hash(new_password)
+    cursor.execute("UPDATE staff SET password = ? WHERE email = ?", (hashed_password, email))
+    conn.commit()
+    conn.close()
+
+    return jsonify({"success": True, "message": "Password changed successfully"}), 200
+@staff_bp.route('/staff/<int:staff_id>/status', methods=['PUT'])
+def update_staff_status(staff_id):
+    data = request.get_json()
+    is_active = data.get("is_activated")
+
+    if is_active not in [0, 1]:
+        return jsonify({"message": "Invalid status"}), 400
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("UPDATE staff SET is_activated = ? WHERE id = ?", (is_active, staff_id))
+    conn.commit()
+    conn.close()
+    return jsonify({"message": f"Staff {'activated' if is_active else 'deactivated'} successfully"}), 200
+
