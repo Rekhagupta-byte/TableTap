@@ -12,3 +12,5 @@ MAIL_PASSWORD = os.getenv("MAIL_PASSWORD")
 MAIL_DEFAULT_SENDER = os.getenv("MAIL_DEFAULT_SENDER")
 SECRET_KEY = os.getenv("SECRET_KEY", "default_secret")
 DATABASE = os.getenv("DATABASE", "tabletap.db")
+BASE_URL = os.getenv("TABLETAP_BASE_URL", "http://localhost:5000")
+

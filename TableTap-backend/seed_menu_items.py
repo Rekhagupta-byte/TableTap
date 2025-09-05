@@ -1,5 +1,7 @@
 # see_menu_items.py
 import sqlite3
+from config import BASE_URL  # << Add this
+
 
 def seed_menu_items():
     # Make sure DB name matches your main app
@@ -17,7 +19,7 @@ def seed_menu_items():
         )
     ''')
 
-    base_image_url = "http://192.168.0.244:5000/static/images/"
+    base_image_url = BASE_URL + "/static/images/"
 
 
     # Define the menu items
