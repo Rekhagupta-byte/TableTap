@@ -4,8 +4,9 @@ from flask_cors import CORS
 import config
 from db import init_db
 from auth_routes import auth_bp, set_mail
-from routes_customer import customer_bp
+from customer_routes import customer_bp
 from staff_routes import staff_bp, set_mail as set_staff_mail
+from order_routes import order_bp
 app = Flask(__name__)  # Step 1: Create app
 
 app.config.from_object(config)  # Step 2: Config
@@ -22,6 +23,8 @@ init_db()
 app.register_blueprint(auth_bp)
 app.register_blueprint(customer_bp)
 app.register_blueprint(staff_bp)
+app.register_blueprint(order_bp)
+
 
 
 if __name__ == '__main__':
