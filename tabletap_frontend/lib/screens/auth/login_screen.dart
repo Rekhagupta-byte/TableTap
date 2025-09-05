@@ -7,7 +7,7 @@ import 'dart:convert';
 import '../home/home_screen.dart';
 import 'email_input_screen.dart';
 import '../owner/owner_home_screen.dart';
-import '../staff/staff_home_screen.dart';
+import '../staff/common/staff_home_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});

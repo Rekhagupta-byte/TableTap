@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-class StaffManageOrdersScreen extends StatelessWidget {
-  const StaffManageOrdersScreen({super.key});
+class WaiterManageOrderScreen extends StatelessWidget {
+  const WaiterManageOrderScreen({super.key});
 
   @override
   Widget build(BuildContext context) {

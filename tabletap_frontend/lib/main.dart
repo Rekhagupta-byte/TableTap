@@ -9,7 +9,7 @@ import 'dart:async';
 import 'package:tabletap_frontend/screens/auth/login_screen.dart';
 import 'package:tabletap_frontend/screens/auth/email_input_screen.dart';
 import 'package:tabletap_frontend/screens/owner/owner_home_screen.dart';
-import 'package:tabletap_frontend/screens/staff/staff_home_screen.dart';
+import 'package:tabletap_frontend/screens/staff/common/staff_home_screen.dart';
 import 'package:tabletap_frontend/screens/owner/manage_menu_screen.dart';
 import 'package:tabletap_frontend/screens/owner/add_menu_item_screen.dart';
 import 'package:tabletap_frontend/screens/owner/manage_orders_screen.dart';

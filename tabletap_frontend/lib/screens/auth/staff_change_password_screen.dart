@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:tabletap_frontend/screens/staff/staff_home_screen.dart';
+import 'package:tabletap_frontend/screens/staff/common/staff_home_screen.dart';
 
 class StaffChangePasswordScreen extends StatefulWidget {
   final String email;

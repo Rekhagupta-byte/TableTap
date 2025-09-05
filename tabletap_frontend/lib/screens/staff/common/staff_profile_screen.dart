@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'staff_change_password_screen.dart';
+import '../../auth/staff_change_password_screen.dart';
 import 'staff_home_screen.dart';
 
 class StaffProfileScreen extends StatefulWidget {
