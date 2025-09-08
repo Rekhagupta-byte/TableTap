@@ -1,9 +1,11 @@
+import os
 import sqlite3
 from flask import Blueprint, request, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_mail import Message
 import random
 from db import get_db_connection
+from config import BASE_URL
 
 auth_bp = Blueprint('auth', __name__)
 mail = None  # Will be set from app.py
@@ -169,7 +171,7 @@ def login():
             "message": "Login successful",
             "user": {
                 "email": staff["email"],
-                "role": "staff",
+                "role": staff["role"].lower(),
                 "name": staff["name"],
                 "is_activated": staff["is_activated"]
             }
@@ -178,7 +180,6 @@ def login():
     # ---------------- Login Failed ----------------
     conn.close()
     return jsonify({"success": False, "message": "User not found or invalid password"}), 404
-
 
 
 
@@ -197,12 +198,27 @@ def get_table_info(table_number):
         }), 200
     return jsonify({"success": False, "message": "Table not found"}), 404
 
-@auth_bp.route("/menu")
-def menu():
+
+# ------------------ MENU ------------------
+@auth_bp.route("/menu", methods=["GET"])
+def get_menu_items():
     conn = get_db_connection()
     items = conn.execute("SELECT * FROM menu").fetchall()
     conn.close()
-    return jsonify([dict(item) for item in items])
+
+    base_url = BASE_URL.rstrip("/")  # use from config.py
+    menu_list = []
+    for item in items:
+        item_dict = dict(item)
+
+        # If only filename is stored, build full URL
+        if item_dict.get("image_url"):
+            item_dict["image_url"] = f"{base_url}/static/images/{item_dict['image_url']}"
+
+        menu_list.append(item_dict)
+
+    return jsonify(menu_list), 200
+
 
 @auth_bp.route('/menu', methods=['POST'])
 def add_menu_item():
@@ -210,7 +226,11 @@ def add_menu_item():
     name = data.get('name')
     price = data.get('price')
     category = data.get('category')
+
+    # ✅ Clean image_url
     image_url = data.get('image_url', '')
+    if image_url:
+        image_url = os.path.basename(image_url)
 
     if not name or price is None or not category:
         return jsonify({"message": "Missing required fields"}), 400
@@ -227,27 +247,50 @@ def add_menu_item():
     except Exception as e:
         return jsonify({"message": "Error adding item", "error": str(e)}), 500
 
+
 @auth_bp.route('/menu/<int:item_id>', methods=['PUT'])
 def update_menu_item(item_id):
-    data = request.get_json()
-    name = data.get('name')
-    price = data.get('price')
-    category = data.get('category')
-    image_url = data.get('image_url', '')
-
-    if not name or price is None or not category:
-        return jsonify({"message": "Missing required fields"}), 400
-
+    data = request.json
     conn = get_db_connection()
+
     cursor = conn.cursor()
-    cursor.execute(
-        "UPDATE menu SET name=?, price=?, category=?, image_url=? WHERE id=?",
-        (name, price, category, image_url, item_id)
-    )
+
+    # fetch old record first
+    cursor.execute("SELECT * FROM menu WHERE id = ?", (item_id,))
+    existing = cursor.fetchone()
+    if not existing:
+        conn.close()
+        return jsonify({'error': 'Item not found'}), 404
+
+    # use new value if provided, else keep old
+    name = data.get('name', existing['name'])
+    price = data.get('price', existing['price'])
+    category = data.get('category', existing['category'])
+    image_url = data.get('image_url', existing['image_url'])
+
+    # ✅ Clean image_url
+    if image_url:
+        image_url = os.path.basename(image_url)
+
+    cursor.execute("""
+        UPDATE menu SET name=?, price=?, category=?, image_url=? WHERE id=?
+    """, (name, price, category, image_url, item_id))
     conn.commit()
-    updated = cursor.rowcount
     conn.close()
 
-    if updated == 0:
+    return jsonify({'message': 'Menu item updated successfully'})
+
+
+
+@auth_bp.route('/menu/<int:item_id>', methods=['DELETE'])
+def delete_menu_item(item_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM menu WHERE id=?", (item_id,))
+    conn.commit()
+    deleted = cursor.rowcount
+    conn.close()
+
+    if deleted == 0:
         return jsonify({"message": "Menu item not found"}), 404
-    return jsonify({"message": "Menu item updated successfully"}), 200
+    return jsonify({"message": "Menu item deleted successfully"}), 200

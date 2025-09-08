@@ -3,6 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
+import 'package:tabletap_frontend/utils/api_helper.dart';
+
 class EditStaffScreen extends StatefulWidget {
   final Map<String, dynamic> staff;
   const EditStaffScreen({super.key, required this.staff});
@@ -50,7 +52,7 @@ class _EditStaffScreenState extends State<EditStaffScreen> {
 
     try {
       final response = await http.put(
-        Uri.parse("http://192.168.0.244:5000/staff/${widget.staff['id']}"),
+        Uri.parse(api("/staff/${widget.staff['id']}")),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           "name": name,

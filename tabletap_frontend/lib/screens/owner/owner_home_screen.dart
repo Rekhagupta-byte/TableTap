@@ -6,14 +6,36 @@ import 'package:tabletap_frontend/screens/owner/manage_staff/manage_staff_screen
 import 'package:tabletap_frontend/screens/owner/qrcode/generate_qr_screen.dart';
 import 'manage_menu_screen.dart';
 import 'manage_orders_screen.dart';
+import 'owner_profile_screen.dart'; // <-- import your profile screen
 
-class OwnerHomeScreen extends StatelessWidget {
+class OwnerHomeScreen extends StatefulWidget {
   const OwnerHomeScreen({super.key});
 
-  // ✅ Logout Function
+  @override
+  State<OwnerHomeScreen> createState() => _OwnerHomeScreenState();
+}
+
+class _OwnerHomeScreenState extends State<OwnerHomeScreen> {
+  String ownerName = '';
+  String ownerEmail = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadOwnerInfo();
+  }
+
+  Future<void> _loadOwnerInfo() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      ownerName = prefs.getString('owner_name') ?? 'Owner';
+      ownerEmail = prefs.getString('owner_email') ?? 'owner@example.com';
+    });
+  }
+
   Future<void> _logout(BuildContext context) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.clear(); // Clear saved login info
+    await prefs.clear();
 
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(builder: (_) => const LoginScreen()),
@@ -21,21 +43,44 @@ class OwnerHomeScreen extends StatelessWidget {
     );
   }
 
+  // Navigate to Profile Screen
+  void _goToProfile() {
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (_) => const OwnerProfileScreen(),
+    ),
+  );
+}
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF0F0F5),
       drawer: Drawer(
-        child: Column(
+        child: ListView(
+          padding: EdgeInsets.zero,
           children: [
             UserAccountsDrawerHeader(
-              accountName: const Text('Rekha Kumari'),
-              accountEmail: const Text('kumarirekha6465@gmail.com'),
-              currentAccountPicture: const CircleAvatar(
-                backgroundColor: Colors.white,
-                child: Icon(Icons.person, color: Colors.deepPurple, size: 36),
+              accountName: Text(ownerName),
+              accountEmail: Text(ownerEmail),
+              currentAccountPicture: GestureDetector(
+                onTap: _goToProfile,
+                child: CircleAvatar(
+                  backgroundColor: Colors.white,
+                  child: Icon(Icons.person, color: Colors.deepPurple, size: 36),
+                ),
               ),
               decoration: const BoxDecoration(color: Colors.deepPurple),
+            ),
+            ListTile(
+              leading: const Icon(Icons.person),
+              title: const Text('Profile'),
+              onTap: () {
+                Navigator.pop(context);
+                _goToProfile();
+              },
             ),
             ListTile(
               leading: const Icon(Icons.restaurant_menu),
@@ -85,7 +130,7 @@ class OwnerHomeScreen extends StatelessWidget {
             ListTile(
               leading: const Icon(Icons.logout),
               title: const Text('Logout'),
-              onTap: () => _logout(context), // ✅ Fixed
+              onTap: () async => await _logout(context),
             ),
           ],
         ),
@@ -98,117 +143,122 @@ class OwnerHomeScreen extends StatelessWidget {
         backgroundColor: Colors.deepPurple,
         centerTitle: true,
       ),
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 👤 Header
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Welcome back,',
-                        style: GoogleFonts.poppins(
-                            fontSize: 16, color: Colors.grey[700])),
-                    const SizedBox(height: 4),
-                    Text('Owner',
-                        style: GoogleFonts.poppins(
-                          fontSize: 26,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.deepPurple,
-                        )),
-                  ],
-                ),
-                const CircleAvatar(
-                  radius: 26,
-                  backgroundColor: Colors.deepPurple,
-                  child: Icon(Icons.person, size: 30, color: Colors.white),
-                )
-              ],
-            ),
-
-            const SizedBox(height: 30),
-
-            // 💡 Dashboard Grid
-            Expanded(
-              child: GridView.count(
-                crossAxisCount: 2,
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
+      body: RefreshIndicator(
+        onRefresh: _loadOwnerInfo,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // 👤 Header
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  _buildDashboardCard(
-                    context,
-                    icon: Icons.restaurant_menu,
-                    label: 'Manage Menu',
-                    color: Colors.purpleAccent,
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (_) => const ManageMenuScreen()),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Welcome back,',
+                          style: GoogleFonts.poppins(
+                              fontSize: 16, color: Colors.grey[700])),
+                      const SizedBox(height: 4),
+                      Text(ownerName,
+                          style: GoogleFonts.poppins(
+                            fontSize: 26,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.deepPurple,
+                          )),
+                      
+                    ],
+                  ),
+                  GestureDetector(
+                    onTap: _goToProfile, // <-- tap on profile avatar
+                    child: CircleAvatar(
+                      radius: 26,
+                      backgroundColor: Colors.deepPurple,
+                      child:
+                          const Icon(Icons.person, size: 30, color: Colors.white),
                     ),
-                  ),
-                  _buildDashboardCard(
-                    context,
-                    icon: Icons.receipt_long,
-                    label: 'View Orders',
-                    color: Colors.orangeAccent,
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (_) => const ManageOrdersScreen()),
-                    ),
-                  ),
-                  _buildDashboardCard(
-                    context,
-                    icon: Icons.group,
-                    label: 'Manage Staff',
-                    color: Colors.green,
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (_) => const ManageStaffScreen()),
-                    ),
-                  ),
-                  _buildDashboardCard(
-                    context,
-                    icon: Icons.qr_code_2,
-                    label: 'Manage QR',
-                    color: Colors.indigoAccent,
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => GenerateQRScreen()),
-                    ),
-                  ),
-                  _buildDashboardCard(
-                    context,
-                    icon: Icons.settings,
-                    label: 'Settings',
-                    color: Colors.blueAccent,
-                    onTap: () {
-                      ScaffoldMessenger.of(context)
-                          .showSnackBar(const SnackBar(content: Text("To Do")));
-                    },
-                  ),
-                  _buildDashboardCard(
-                    context,
-                    icon: Icons.logout,
-                    label: 'Logout',
-                    color: Colors.redAccent,
-                    onTap: () => _logout(context), // ✅ Fixed
-                  ),
+                  )
                 ],
               ),
-            ),
-          ],
+              const SizedBox(height: 30),
+              // 💡 Dashboard Grid
+              Expanded(
+                child: GridView.count(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 16,
+                  mainAxisSpacing: 16,
+                  children: [
+                    _buildDashboardCard(
+                      context,
+                      icon: Icons.restaurant_menu,
+                      label: 'Manage Menu',
+                      color: Colors.purpleAccent,
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => const ManageMenuScreen()),
+                      ),
+                    ),
+                    _buildDashboardCard(
+                      context,
+                      icon: Icons.receipt_long,
+                      label: 'View Orders',
+                      color: Colors.orangeAccent,
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => const ManageOrdersScreen()),
+                      ),
+                    ),
+                    _buildDashboardCard(
+                      context,
+                      icon: Icons.group,
+                      label: 'Manage Staff',
+                      color: Colors.green,
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => const ManageStaffScreen()),
+                      ),
+                    ),
+                    _buildDashboardCard(
+                      context,
+                      icon: Icons.qr_code_2,
+                      label: 'Manage QR',
+                      color: Colors.indigoAccent,
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => GenerateQRScreen()),
+                      ),
+                    ),
+                    _buildDashboardCard(
+                      context,
+                      icon: Icons.settings,
+                      label: 'Settings',
+                      color: Colors.blueAccent,
+                      onTap: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text("To Do")));
+                      },
+                    ),
+                    _buildDashboardCard(
+                      context,
+                      icon: Icons.logout,
+                      label: 'Logout',
+                      color: Colors.redAccent,
+                      onTap: () async => await _logout(context),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  // 📦 Reusable Card Widget
   Widget _buildDashboardCard(BuildContext context,
       {required IconData icon,
       required String label,

@@ -1,26 +1,14 @@
-# see_menu_items.py
 import sqlite3
-from config import BASE_URL  # << Add this
+from config import BASE_URL
 
 
 def seed_menu_items():
-    # Make sure DB name matches your main app
     conn = sqlite3.connect('tabletap.db')  
     cursor = conn.cursor()
-
-    # Create the menu table if it doesn't exist
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS menu (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL,
-            price REAL NOT NULL,
-            category TEXT,
-            image_url TEXT
-        )
-    ''')
-
     base_image_url = BASE_URL + "/static/images/"
 
+    # Ensure "name" is unique
+    cursor.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_menu_name ON menu(name);")
 
     # Define the menu items
     menu_items = [
@@ -86,20 +74,24 @@ def seed_menu_items():
         {"name": "Gajar Halwa", "price": 70, "category": "Desserts"}
     ]
 
-    # Generate image URLs and insert
+    # Insert/update items
     for item in menu_items:
         filename = item['name'].lower().replace(" ", "_") + ".jpg"
         item['image_url'] = base_image_url + filename
 
-        cursor.execute('''
+        cursor.execute("""
             INSERT INTO menu (name, price, category, image_url)
             VALUES (?, ?, ?, ?)
-        ''', (item['name'], item['price'], item['category'], item['image_url'])) 
+            ON CONFLICT(name) DO UPDATE SET
+                price=excluded.price,
+                category=excluded.category,
+                image_url=excluded.image_url;
+        """, (item['name'], item['price'], item['category'], item['image_url']))
 
     conn.commit()
     conn.close()
-    print("✅ All menu items inserted successfully (without descriptions).")
+    print("✅ Menu preloaded successfully (UPSERT, no duplicates).")
 
-# Run
+
 if __name__ == "__main__":
     seed_menu_items()

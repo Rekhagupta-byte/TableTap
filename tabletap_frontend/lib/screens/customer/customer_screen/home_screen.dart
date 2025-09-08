@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:tabletap_frontend/utils/api_helper.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -64,7 +65,8 @@ class HomeScreen extends StatelessWidget {
                             context,
                             '/menu',
                             arguments: {
-                              'menuUrl': 'http://192.168.0.244:5000/menu'
+                              'menuUrl': api('/menu'),
+
                             },
                           );
                         },

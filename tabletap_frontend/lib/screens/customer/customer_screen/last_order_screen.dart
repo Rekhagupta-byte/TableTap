@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:tabletap_frontend/constants.dart';
+import 'package:tabletap_frontend/utils/api_helper.dart';
 
 class LastOrderScreen extends StatefulWidget {
   final int tableNumber; // Pass this when navigating from QR scan
@@ -21,9 +23,7 @@ class _LastOrderScreenState extends State<LastOrderScreen> {
   }
 
   Future<void> _fetchLastOrder() async {
-    final url = Uri.parse(
-      "http://192.168.0.244:5000/last-order?table_number=${widget.tableNumber}",
-    );
+    final url = Uri.parse(api('/last-order?table_number=${widget.tableNumber}'));
 
     try {
       final res = await http.get(url);
@@ -72,10 +72,13 @@ class _LastOrderScreenState extends State<LastOrderScreen> {
                           return ListTile(
                             leading: imageUrl.isNotEmpty
                                 ? Image.network(
-                                    imageUrl,
+                                    "${ApiConstants.baseUrl}$imageUrl",
                                     width: 50,
                                     height: 50,
                                     fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return const Icon(Icons.image_not_supported);
+                                    },
                                   )
                                 : const Icon(Icons.image_not_supported),
                             title: Text(item['name']),

@@ -2,8 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
-
-// Import your details screen here
+import 'package:tabletap_frontend/utils/api_helper.dart';
 import 'waiter_order_details_screen.dart';
 
 class WaiterOrderScreen extends StatefulWidget {
@@ -18,8 +17,6 @@ class _WaiterOrderScreenState extends State<WaiterOrderScreen> {
   List<Map<String, dynamic>> orders = [];
   bool isLoading = true;
 
-  final String baseUrl = "http://192.168.0.244:5000";
-
   @override
   void initState() {
     super.initState();
@@ -28,12 +25,27 @@ class _WaiterOrderScreenState extends State<WaiterOrderScreen> {
 
   Future<void> _fetchOrders() async {
     setState(() => isLoading = true);
+
     try {
-      final response = await http.get(Uri.parse('$baseUrl/orders'));
+      final url = Uri.parse(api('/orders'));
+      final response = await http.get(url);
+
+      print('Status Code: ${response.statusCode}');
+      print('Response Body: ${response.body}');
+
       if (response.statusCode == 200) {
-        final List data = json.decode(response.body);
+        final data = json.decode(response.body);
+
+        // Ensure we handle Map response with "orders" key or List directly
+        List<Map<String, dynamic>> orderList = [];
+        if (data is List) {
+          orderList = List<Map<String, dynamic>>.from(data);
+        } else if (data is Map && data['orders'] != null) {
+          orderList = List<Map<String, dynamic>>.from(data['orders']);
+        }
+
         setState(() {
-          orders = List<Map<String, dynamic>>.from(data);
+          orders = orderList;
           isLoading = false;
         });
       } else {
@@ -61,7 +73,7 @@ class _WaiterOrderScreenState extends State<WaiterOrderScreen> {
 
     try {
       final response = await http.put(
-        Uri.parse('$baseUrl/order/${order['id']}/status'),
+        Uri.parse(api('/order/${order['id']}/status')),
         headers: {"Content-Type": "application/json"},
         body: json.encode({"status": newStatus}),
       );
@@ -76,7 +88,7 @@ class _WaiterOrderScreenState extends State<WaiterOrderScreen> {
           SnackBar(content: Text('Order #${order['id']} updated!')),
         );
       } else {
-        throw Exception('Failed to update order');
+        throw Exception('Failed to update order, status: ${response.statusCode}');
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -108,6 +120,17 @@ class _WaiterOrderScreenState extends State<WaiterOrderScreen> {
         return Colors.green;
       default:
         return Colors.grey;
+    }
+  }
+
+  Color _getCardColor(String status) {
+    switch (status) {
+      case 'pending':
+        return Colors.orange[50]!;
+      case 'completed':
+        return Colors.grey[200]!;
+      default:
+        return Colors.white;
     }
   }
 
@@ -147,6 +170,7 @@ class _WaiterOrderScreenState extends State<WaiterOrderScreen> {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
                         ),
+                        color: _getCardColor(order['status']),
                         elevation: 3,
                         margin: const EdgeInsets.only(bottom: 16),
                         child: Padding(
@@ -156,17 +180,16 @@ class _WaiterOrderScreenState extends State<WaiterOrderScreen> {
                             children: [
                               // Header row
                               Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
                                   Row(
                                     children: [
                                       CircleAvatar(
-                                        backgroundColor:
-                                            _getStatusColor(order['status']),
-                                        child: Text(order['table'].toString(),
-                                            style: const TextStyle(
-                                                color: Colors.white)),
+                                        backgroundColor: _getStatusColor(order['status']),
+                                        child: Text(
+                                          order['table'].toString(),
+                                          style: const TextStyle(color: Colors.white),
+                                        ),
                                       ),
                                       const SizedBox(width: 12),
                                       Text('Order #${order['id']}',
@@ -176,16 +199,25 @@ class _WaiterOrderScreenState extends State<WaiterOrderScreen> {
                                   ),
                                   if (order['isNew'] == true)
                                     Container(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 8, vertical: 4),
+                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                                       decoration: BoxDecoration(
-                                        color: Colors.red,
-                                        borderRadius: BorderRadius.circular(8),
+                                        color: Colors.redAccent,
+                                        borderRadius: BorderRadius.circular(12),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.redAccent.withOpacity(0.5),
+                                            blurRadius: 4,
+                                            offset: const Offset(0, 2),
+                                          ),
+                                        ],
                                       ),
-                                      child: const Text('NEW',
-                                          style: TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 12)),
+                                      child: const Text(
+                                        'NEW',
+                                        style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.bold),
+                                      ),
                                     ),
                                 ],
                               ),
@@ -198,18 +230,17 @@ class _WaiterOrderScreenState extends State<WaiterOrderScreen> {
                               Row(
                                 children: [
                                   Text('Status: ',
-                                      style: GoogleFonts.poppins(
-                                          fontWeight: FontWeight.w500)),
+                                      style: GoogleFonts.poppins(fontWeight: FontWeight.w500)),
                                   Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 8, vertical: 4),
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                     decoration: BoxDecoration(
                                       color: _getStatusColor(order['status']),
                                       borderRadius: BorderRadius.circular(12),
                                     ),
-                                    child: Text(_formatStatus(order['status']),
-                                        style: const TextStyle(
-                                            color: Colors.white)),
+                                    child: Text(
+                                      _formatStatus(order['status']),
+                                      style: const TextStyle(color: Colors.white),
+                                    ),
                                   ),
                                 ],
                               ),
@@ -229,8 +260,7 @@ class _WaiterOrderScreenState extends State<WaiterOrderScreen> {
                                       order['status'] == 'pending'
                                           ? 'Start Order'
                                           : 'Mark Completed',
-                                      style:
-                                          const TextStyle(color: Colors.white),
+                                      style: const TextStyle(color: Colors.white),
                                     ),
                                   ),
                                 ),

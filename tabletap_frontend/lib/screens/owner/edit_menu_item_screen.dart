@@ -3,6 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
+import 'package:tabletap_frontend/utils/api_helper.dart';
+
 class EditMenuItemScreen extends StatefulWidget {
   final dynamic menuItem;
 
@@ -37,8 +39,9 @@ class _EditMenuItemScreenState extends State<EditMenuItemScreen> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => isLoading = true);
 
-    final url =
-        Uri.parse("http://192.168.0.244:5000/menu/${widget.menuItem['id']}");
+   final url = Uri.parse(api('/menu/${widget.menuItem['id']}'));
+
+
     final response = await http.put(
       url,
       headers: {'Content-Type': 'application/json'},

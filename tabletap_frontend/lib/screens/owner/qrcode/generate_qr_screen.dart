@@ -6,6 +6,7 @@ import 'package:flutter/rendering.dart';
 import 'package:image_gallery_saver_plus/image_gallery_saver_plus.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:tabletap_frontend/utils/api_helper.dart';
 
 class GenerateQRScreen extends StatefulWidget {
   const GenerateQRScreen({super.key});
@@ -138,8 +139,7 @@ class _GenerateQRScreenState extends State<GenerateQRScreen> {
                 RepaintBoundary(
                   key: _qrKey,
                   child: QrImageView(
-                    data:
-                        "http://192.168.0.244:8080?table_number=$_generatedTableNumber",
+                    data: "${api('/customer')}?table_number=$_generatedTableNumber",
                     version: QrVersions.auto,
                     size: 250,
                     backgroundColor: Colors.white,

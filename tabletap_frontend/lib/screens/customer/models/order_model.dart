@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import 'package:tabletap_frontend/utils/api_helper.dart';
 import 'menu_item.dart'; // Your MenuItem model
 
 class OrderModel with ChangeNotifier {
@@ -16,8 +17,8 @@ class OrderModel with ChangeNotifier {
   Future<void> fetchLastOrder(String tableNumber) async {
     try {
       final response = await http.get(
-        Uri.parse("http://192.168.0.244:5000/customer/last-order?table_number=$tableNumber"),
-      );
+      Uri.parse(api('/customer/last-order?table_number=$tableNumber')),
+    );
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);

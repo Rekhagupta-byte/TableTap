@@ -4,10 +4,13 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 
-import '../home/home_screen.dart';
 import 'email_input_screen.dart';
 import '../owner/owner_home_screen.dart';
-import '../staff/common/staff_home_screen.dart';
+import '../staff/waiter/waiter_home_screen.dart';
+import '../staff/chef/chef_order_screen.dart';
+import '../staff/manager/manager_dashboard_screen.dart';
+
+import '../../utils/api_helper.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -22,92 +25,86 @@ class _LoginScreenState extends State<LoginScreen> {
   final passwordController = TextEditingController();
   bool passwordVisible = false;
 
-Future<void> login(BuildContext context) async {
-  if (!_formKey.currentState!.validate()) return;
+  Future<void> login(BuildContext context) async {
+    if (!_formKey.currentState!.validate()) return;
 
-  final email = emailController.text.trim();
-  final password = passwordController.text;
+    final email = emailController.text.trim();
+    final password = passwordController.text;
 
-  final url = Uri.parse("http://192.168.0.244:5000/login");
+    final url = Uri.parse(api('/login'));
 
-  try {
-    final response = await http.post(
-      url,
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'email': email, 'password': password}),
-    );
-
-    final data = jsonDecode(response.body);
-
-    if (response.statusCode == 200 && data['success'] == true) {
-      final user = data['user'];
-      final role = user['role'];
-      int isActivated = user['is_activated'] != null
-          ? int.parse(user['is_activated'].toString())
-          : 0;
-
-      // Save login info
-      await saveLoginStatus(user['email'], role, user, isActivated);
-
-      // Show success message
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(data['message'] ?? 'Login successful')),
+    try {
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'email': email, 'password': password}),
       );
 
-      // Navigate based on role and activation status
-      if (role == 'owner') {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const OwnerHomeScreen()),
-        );
-      } else if (role == 'staff') {
-        if (isActivated == 0) {
-          // Show inactive message
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                  "Your account is deactivated. Please contact the owner."),
-            ),
-          );
-          return; // Stop further navigation
-        } else {
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 200 && data['success'] == true) {
+        final user = data['user'];
+        final role = user['role'].toString().toLowerCase();
+        int isActivated = user['is_activated'] != null
+            ? int.parse(user['is_activated'].toString())
+            : 0;
+
+        // Save login info
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setBool('isLoggedIn', true);
+        await prefs.setString('role', role);
+        await prefs.setString('staffInfo', jsonEncode({
+          ...user,
+          'role': role,
+          'is_activated': isActivated,
+        }));
+
+        // Navigate based on role
+        if (role == 'owner') {
+          await prefs.setString('owner_name', user['name'] ?? 'Owner');
+          await prefs.setString('owner_email', user['email'] ?? email);
+
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (_) => StaffHomeScreen(staff: user)),
+            MaterialPageRoute(builder: (_) => const OwnerHomeScreen()),
+          );
+        } else if (role == 'waiter') {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+                builder: (_) => WaiterHomeScreen(staff: user)),
+          );
+        } else if (role == 'chef') {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+                builder: (_) => ChefOrderScreen(staff: user)),
+          );
+        } else if (role == 'manager') {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+                builder: (_) => ManagerDashboardScreen(staff: user)),
+          );
+        } else {
+          // fallback
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Unknown role")),
           );
         }
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(data['message'] ?? 'Login successful')),
+        );
       } else {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const HomeScreen()),
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(data['message'] ?? 'Login failed')),
         );
       }
-    } else {
+    } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(data['message'] ?? 'Login failed')),
+        SnackBar(content: Text("Error: $e")),
       );
-    }
-  } catch (e) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Network error, please try again.")),
-    );
-  }
-}
-
-  Future<void> saveLoginStatus(
-      String email, String role, Map<String, dynamic> user, int isActivated) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('isLoggedIn', true);
-    await prefs.setString('email', email);
-    await prefs.setString('role', role);
-
-    if (role == 'staff') {
-      // Save full staff info as JSON
-      final staffInfo = {
-        ...user,
-        'is_activated': isActivated,
-      };
-      await prefs.setString('staffInfo', jsonEncode(staffInfo));
     }
   }
 
@@ -194,7 +191,8 @@ Future<void> login(BuildContext context) async {
                 child: GestureDetector(
                   onTap: () => Navigator.pushReplacement(
                     context,
-                    MaterialPageRoute(builder: (_) => const EmailInputScreen()),
+                    MaterialPageRoute(
+                        builder: (_) => const EmailInputScreen()),
                   ),
                   child: Text(
                     "Don't have an account? Sign up",

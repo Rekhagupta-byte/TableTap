@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:tabletap_frontend/screens/customer/customer_screen/order_sucess_screen.dart';
+import 'package:tabletap_frontend/utils/api_helper.dart';
 
 class ViewOrdersScreen extends StatelessWidget {
   final List<Map<String, dynamic>> cartItems;
@@ -33,19 +34,20 @@ class ViewOrdersScreen extends StatelessWidget {
       return;
     }
 
-    const String baseUrl = "http://192.168.0.244:5000"; // Your backend IP
+  
     const String tableNumber = "1"; // TODO: Replace with actual table logic
 
     try {
       final response = await http.post(
-        Uri.parse("$baseUrl/place-order"),
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
-          "table_number": tableNumber,
-          "items": cartItems,
-          "total_price": getTotalAmount(),
-        }),
-      );
+  Uri.parse(api('/place-order')),
+  headers: {"Content-Type": "application/json"},
+  body: jsonEncode({
+    "table_number": tableNumber,
+    "items": cartItems,
+    "total_price": getTotalAmount(),
+  }),
+);
+
 
       debugPrint("Response status: ${response.statusCode}");
       debugPrint("Response body: ${response.body}");

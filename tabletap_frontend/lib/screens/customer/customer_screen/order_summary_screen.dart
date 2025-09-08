@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
+import 'package:tabletap_frontend/utils/api_helper.dart';
 
 import '../models/cart_model.dart';
 import '../models/order_model.dart';
@@ -27,7 +28,6 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
     final cart = Provider.of<CartModel>(context, listen: false);
     final orderModel = Provider.of<OrderModel>(context, listen: false);
 
-    const String baseUrl = "http://192.168.0.244:5000"; // Backend IP
 
     final itemsList = cart.items.entries.map((entry) {
       final menuItem = entry.key;
@@ -53,14 +53,14 @@ class _OrderSummaryScreenState extends State<OrderSummaryScreen> {
 
     try {
       final response = await http.post(
-        Uri.parse("$baseUrl/place-order"),
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
-          "table_number": widget.tableNumber,
-          "items": itemsList,
-          "total_price": totalPrice,
-        }),
-      );
+  Uri.parse(api('/place-order')),
+  headers: {"Content-Type": "application/json"},
+  body: jsonEncode({
+    "table_number": widget.tableNumber,
+    "items": itemsList,
+    "total_price": totalPrice,
+  }),
+);
 
       debugPrint("Response (${response.statusCode}): ${response.body}");
 

@@ -3,6 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
+import 'package:tabletap_frontend/utils/api_helper.dart';
+
 class AddMenuItemScreen extends StatefulWidget {
   const AddMenuItemScreen({super.key});
 
@@ -24,7 +26,8 @@ class _AddMenuItemScreenState extends State<AddMenuItemScreen> {
 
     setState(() => isLoading = true);
 
-    final url = Uri.parse("http://192.168.0.244:5000/menu");
+final url = Uri.parse(api('/menu'));
+
     final response = await http.post(
       url,
       headers: {'Content-Type': 'application/json'},

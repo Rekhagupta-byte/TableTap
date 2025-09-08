@@ -1,9 +1,10 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:tabletap_frontend/constants.dart';
 
 class ApiService {
-  // Use your actual IP if testing on real phone
-  static const String baseUrl = 'http://192.168.0.244:5000';
+  // Use baseUrl from constants
+  static String get baseUrl => ApiConstants.baseUrl;
 
   static Future<List<dynamic>> fetchMenuItems() async {
     final response = await http.get(Uri.parse('$baseUrl/menu'));

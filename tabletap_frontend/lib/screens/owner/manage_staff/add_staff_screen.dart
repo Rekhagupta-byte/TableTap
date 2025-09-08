@@ -3,6 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
+import 'package:tabletap_frontend/utils/api_helper.dart';
+
 class AddStaffScreen extends StatefulWidget {
   const AddStaffScreen({super.key});
 
@@ -28,8 +30,7 @@ class _AddStaffScreenState extends State<AddStaffScreen> {
 
     try {
       final response = await http.post(
-        Uri.parse("http://192.168.0.244:5000/invite"), // backend endpoint
-        headers: {'Content-Type': 'application/json'},
+ Uri.parse(api("/invite")),        headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           "name": name,
           "email": email,

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
+import 'package:tabletap_frontend/utils/api_helper.dart';
+
 class OrderStatusScreen extends StatefulWidget {
   final int orderId;
 
@@ -23,8 +25,7 @@ class _OrderStatusScreenState extends State<OrderStatusScreen> {
   }
 
   Future<void> fetchOrderStatus() async {
-    final url = Uri.parse(
-        "http://192.168.0.244:5000/order-status/${widget.orderId}");
+    final url = Uri.parse(api('/order-status/${widget.orderId}'));
     try {
       final res = await http.get(url).timeout(const Duration(seconds: 8));
 

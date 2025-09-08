@@ -3,6 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
+import 'package:tabletap_frontend/utils/api_helper.dart';
+
 class ManageOrdersScreen extends StatefulWidget {
   const ManageOrdersScreen({super.key});
 
@@ -21,7 +23,7 @@ class _ManageOrdersScreenState extends State<ManageOrdersScreen> {
   }
 
   Future<void> fetchOrders() async {
-    final url = Uri.parse("http://192.168.0.244:5000/orders");
+final url = Uri.parse(api('/orders'));
     final response = await http.get(url);
 
     if (response.statusCode == 200) {

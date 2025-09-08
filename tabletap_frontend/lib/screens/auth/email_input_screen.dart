@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
+import 'package:tabletap_frontend/utils/api_helper.dart';
 
 import 'login_screen.dart';
 import 'otp_verify_screen.dart';
@@ -30,7 +31,7 @@ class _EmailInputScreenState extends State<EmailInputScreen> {
 
     setState(() => isLoading = true);
 
-    final url = Uri.parse("http://192.168.0.244:5000/send-otp");
+final url = Uri.parse(api('/send-otp'));
 
     try {
       final response = await http.post(

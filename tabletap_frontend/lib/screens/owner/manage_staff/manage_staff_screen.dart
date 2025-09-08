@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:tabletap_frontend/screens/owner/manage_staff/edit_staff_screen.dart';
+import 'package:tabletap_frontend/utils/api_helper.dart';
 import 'dart:convert';
 import 'add_staff_screen.dart';
 
@@ -23,7 +24,7 @@ class _ManageStaffScreenState extends State<ManageStaffScreen> {
   }
 
   Future<void> fetchStaff() async {
-    final url = Uri.parse('http://192.168.0.244:5000/staff');
+    final url = Uri.parse(api('/staff')); // ✅ use helper
     final response = await http.get(url);
 
     if (response.statusCode == 200) {
@@ -59,7 +60,7 @@ class _ManageStaffScreenState extends State<ManageStaffScreen> {
 
     if (confirm != true) return;
 
-    final url = Uri.parse('http://192.168.0.244:5000/staff/$id');
+    final url = Uri.parse(api('/staff/$id')); // ✅ use helper
     final response = await http.delete(url);
 
     if (response.statusCode == 200) {
@@ -92,9 +93,10 @@ class _ManageStaffScreenState extends State<ManageStaffScreen> {
     if (result == true) fetchStaff(); // Refresh after add
   }
 
-  // ✅ Add this method for activation toggle
+  // ✅ Activation toggle
   void _updateStaffStatus(int id, int status) async {
-    final url = Uri.parse('http://192.168.0.244:5000/staff/$id/status');
+    final url = Uri.parse(api('/staff/$id/status'));
+
     final response = await http.put(
       url,
       headers: {'Content-Type': 'application/json'},
@@ -161,7 +163,6 @@ class _ManageStaffScreenState extends State<ManageStaffScreen> {
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            // ✅ Activation toggle switch
                             Switch(
                               value: staff['is_activated'] == 1,
                               onChanged: (value) {

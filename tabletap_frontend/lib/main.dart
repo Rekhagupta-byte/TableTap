@@ -9,7 +9,10 @@ import 'dart:async';
 import 'package:tabletap_frontend/screens/auth/login_screen.dart';
 import 'package:tabletap_frontend/screens/auth/email_input_screen.dart';
 import 'package:tabletap_frontend/screens/owner/owner_home_screen.dart';
-import 'package:tabletap_frontend/screens/staff/common/staff_home_screen.dart';
+import 'package:tabletap_frontend/screens/staff/waiter/waiter_home_screen.dart';
+import 'package:tabletap_frontend/screens/staff/waiter/waiter_order_screen.dart';
+import 'package:tabletap_frontend/screens/staff/chef/chef_order_screen.dart';
+import 'package:tabletap_frontend/screens/staff/manager/manager_dashboard_screen.dart';
 import 'package:tabletap_frontend/screens/owner/manage_menu_screen.dart';
 import 'package:tabletap_frontend/screens/owner/add_menu_item_screen.dart';
 import 'package:tabletap_frontend/screens/owner/manage_orders_screen.dart';
@@ -88,14 +91,23 @@ class _MyAppState extends State<MyApp> {
       homeScreen = const LoginScreen();
     } else if (widget.role == 'owner') {
       homeScreen = const OwnerHomeScreen();
-    } else if (widget.role == 'staff') {
+    } else if (widget.role == 'waiter' ||
+        widget.role == 'chef' ||
+        widget.role == 'manager') {
       if (widget.staffJson != null && widget.staffJson!.isNotEmpty) {
         final Map<String, dynamic> staffInfo = jsonDecode(widget.staffJson!);
+
         // Force password change if not activated
         if (staffInfo['is_activated'] == 0) {
-          homeScreen = LoginScreen(); // or navigate to ChangePasswordScreen
+          homeScreen = const LoginScreen(); // later: ChangePasswordScreen
         } else {
-          homeScreen = StaffHomeScreen(staff: staffInfo);
+          if (widget.role == 'waiter') {
+            homeScreen = WaiterHomeScreen(staff: staffInfo);
+          } else if (widget.role == 'chef') {
+            homeScreen = ChefOrderScreen(staff: staffInfo);
+          } else {
+            homeScreen = ManagerDashboardScreen(staff: staffInfo);
+          }
         }
       } else {
         homeScreen = const LoginScreen(); // fallback

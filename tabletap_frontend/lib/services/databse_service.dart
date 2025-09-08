@@ -1,10 +1,11 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:tabletap_frontend/constants.dart';
 import '../models/menu_item.dart';
 
 class DatabaseService {
-  static const String baseUrl =
-      'http://192.168.0.244:5000'; // Replace with your Flask IP
+  // Use baseUrl from constants
+  static String get baseUrl => ApiConstants.baseUrl;
 
   // 🔹 Get all menu items
   static Future<List<MenuItem>> getMenuItems() async {

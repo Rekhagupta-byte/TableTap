@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -26,17 +27,19 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
   }
 
   Future<void> _saveProfile() async {
-    // For demo, we only update local SharedPreferences
+    // Update staff info
     final updatedStaff = {
       'name': _nameController.text.trim(),
       'email': widget.staff['email'],
-      'role': widget.staff['role'],
+      'role': widget.staff['role'], // Keep role as is
       'phone': _phoneController.text.trim(),
       'is_activated': widget.staff['is_activated'] ?? 1,
+      'is_password_changed': widget.staff['is_password_changed'] ?? true,
     };
 
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.setString('staffInfo', updatedStaff.toString());
+    // Save as JSON
+    await prefs.setString('staffInfo', jsonEncode(updatedStaff));
 
     setState(() {
       _isEditing = false;
@@ -50,10 +53,12 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.clear();
     Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(
-            builder: (_) => StaffHomeScreen(staff: widget.staff)),
-        (route) => false);
+      context,
+      MaterialPageRoute(
+        builder: (_) => StaffHomeScreen(staff: widget.staff),
+      ),
+      (route) => false,
+    );
   }
 
   @override
@@ -65,10 +70,8 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
         actions: [
           IconButton(
             icon: Icon(_isEditing ? Icons.save : Icons.edit),
-            onPressed: _isEditing ? _saveProfile : () {
-              setState(() => _isEditing = true);
-            },
-          )
+            onPressed: _isEditing ? _saveProfile : () => setState(() => _isEditing = true),
+          ),
         ],
       ),
       body: SingleChildScrollView(
@@ -94,6 +97,7 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
                   children: [
+                    // Name
                     TextField(
                       controller: _nameController,
                       enabled: _isEditing,
@@ -103,6 +107,8 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
                       ),
                     ),
                     const SizedBox(height: 16),
+
+                    // Phone
                     TextField(
                       controller: _phoneController,
                       enabled: _isEditing,
@@ -112,6 +118,8 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
                       ),
                     ),
                     const SizedBox(height: 16),
+
+                    // Email (non-editable)
                     TextField(
                       controller: TextEditingController(text: widget.staff['email']),
                       enabled: false,
@@ -121,6 +129,8 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
                       ),
                     ),
                     const SizedBox(height: 16),
+
+                    // Role (non-editable)
                     TextField(
                       controller: TextEditingController(text: widget.staff['role']),
                       enabled: false,
@@ -143,11 +153,14 @@ class _StaffProfileScreenState extends State<StaffProfileScreen> {
                   icon: Icons.lock,
                   title: 'Change Password',
                   onTap: () {
-                    Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (_) => StaffChangePasswordScreen(
-                                email: widget.staff['email'])));
+                   Navigator.push(
+  context,
+  MaterialPageRoute(
+    builder: (_) =>
+        StaffChangePasswordScreen(staff: widget.staff),
+  ),
+);
+
                   },
                 ),
                 actionCard(

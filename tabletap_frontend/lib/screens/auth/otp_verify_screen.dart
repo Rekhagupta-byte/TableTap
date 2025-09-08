@@ -4,6 +4,8 @@ import 'package:http/http.dart' as http;
 import 'package:tabletap_frontend/screens/auth/signup_from_screen.dart';
 import 'dart:convert';
 
+import 'package:tabletap_frontend/utils/api_helper.dart';
+
 class OtpVerifyScreen extends StatefulWidget {
   final String email;
   const OtpVerifyScreen({super.key, required this.email});
@@ -27,8 +29,8 @@ class _OtpVerifyScreenState extends State<OtpVerifyScreen> {
     }
 
     setState(() => isVerifying = true);
+    final url = Uri.parse(api('/verify-otp'));
 
-    final url = Uri.parse("http://192.168.0.244:5000/verify-otp");
     final response = await http.post(
       url,
       headers: {'Content-Type': 'application/json'},
@@ -58,8 +60,8 @@ class _OtpVerifyScreenState extends State<OtpVerifyScreen> {
   void resendOtp() async {
     if (!isResendAllowed) return;
     setState(() => isResendAllowed = false);
+    final url = Uri.parse(api('/send-otp'));
 
-    final url = Uri.parse("http://192.168.0.244:5000/send-otp");
     final response = await http.post(
       url,
       headers: {'Content-Type': 'application/json'},

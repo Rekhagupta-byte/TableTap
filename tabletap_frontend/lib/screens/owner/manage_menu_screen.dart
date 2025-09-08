@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
+import 'package:tabletap_frontend/utils/api_helper.dart';
 import 'dart:convert';
 
 import 'add_menu_item_screen.dart';
@@ -17,8 +18,6 @@ class _ManageMenuScreenState extends State<ManageMenuScreen> {
   List<dynamic> menuItems = [];
   bool isLoading = true;
 
-  final String baseUrl = "http://192.168.0.244:5000";
-
   @override
   void initState() {
     super.initState();
@@ -28,7 +27,7 @@ class _ManageMenuScreenState extends State<ManageMenuScreen> {
   /// Fetch all menu items
   Future<void> fetchMenuItems() async {
     try {
-      final url = Uri.parse("$baseUrl/menu");
+      final url = Uri.parse(api('/menu')); // ✅ use api() helper
       final response = await http.get(url);
 
       if (response.statusCode == 200) {
@@ -49,7 +48,7 @@ class _ManageMenuScreenState extends State<ManageMenuScreen> {
   /// Delete a menu item
   Future<void> deleteMenuItem(int itemId) async {
     try {
-      final url = Uri.parse("$baseUrl/menu/$itemId");
+      final url = Uri.parse(api('/menu/$itemId')); // ✅ use api() helper
       final response = await http.delete(url);
 
       if (response.statusCode == 200) {
@@ -95,7 +94,7 @@ class _ManageMenuScreenState extends State<ManageMenuScreen> {
     String? imageUrl = item['image_url'];
     if (imageUrl != null && imageUrl.isNotEmpty) {
       if (!imageUrl.startsWith('http')) {
-        imageUrl = "$baseUrl$imageUrl"; // fix relative path
+        imageUrl = api(imageUrl); // ✅ convert relative paths using api()
       }
     }
 
@@ -197,7 +196,6 @@ class _ManageMenuScreenState extends State<ManageMenuScreen> {
     );
   }
 
-  /// show snackbar helper
   void _showSnackBar(String message) {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(

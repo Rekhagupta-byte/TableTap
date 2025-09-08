@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:tabletap_frontend/constants.dart';
 import '../services/api_service.dart';
 
 class MenuScreen extends StatefulWidget {
@@ -18,11 +19,11 @@ class _MenuScreenState extends State<MenuScreen> {
     _menuFuture = ApiService.fetchMenuItems();
   }
 
-  Widget buildMenuCard(dynamic item) {
-    String? imageUrl = item['image_url'];
-    if (imageUrl != null && !imageUrl.startsWith('http')) {
-      imageUrl = "http://192.168.0.244:5000$imageUrl"; // ✅ fix relative URL
-    }
+Widget buildMenuCard(dynamic item) {
+  String? imageUrl = item['image_url'];
+  if (imageUrl != null && !imageUrl.startsWith('http')) {
+    imageUrl = "${ApiConstants.baseUrl}$imageUrl"; // use baseUrl from constants
+  }
 
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
